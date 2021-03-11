@@ -1,0 +1,8 @@
+{
+    "name": "PI-Pico",
+    "stubs": {},
+    "dev-packages": {
+        "micropy-cli": "*"
+    },
+    "packages": {}
+}
