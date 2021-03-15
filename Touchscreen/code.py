@@ -7,7 +7,6 @@ import usb_hid
 import storage
 import ulab
 from adafruit_hid.digitizer import Digitizer
-from adafruit_debouncer import Debouncer
 
 green = digitalio.DigitalInOut(board.LED_G)
 
