@@ -127,12 +127,15 @@ def calibration():
     print("Y MIN: ", y_min)
     print("Y MAX: ", y_max)
     temp = solve(x_min, x_max) + solve(y_min, y_max)
-    storage.remount("/", False)
-    with open("/saved.txt", "w") as fp:
-        fp.write(str(temp[0]) + " " + str(temp[1]) + "\n")
-        fp.write(str(temp[2]) + " " + str(temp[3]))
-        fp.close()
-    storage.remount("/", True)
+    try:
+        storage.remount("/", False)
+        with open("/saved.txt", "w") as fp:
+            fp.write(str(temp[0]) + " " + str(temp[1]) + "\n")
+            fp.write(str(temp[2]) + " " + str(temp[3]))
+            fp.close()
+        storage.remount("/", True)
+    except:
+        print("ERROR did not save")
     return temp
 
 
@@ -143,7 +146,6 @@ def touch():
     x2 = 0
     y1 = 0
     y2 = 0
-    last_mode = False
     digitizer = Digitizer(usb_hid.devices)
     try:
         with open("/saved.txt", "r") as fp:
@@ -157,7 +159,7 @@ def touch():
             y2 = float(y2)
             fp.close()
     except:
-        print("ERROR when reading")
+        print("ERROR when reading reseting to default values")
         x1 = 0.599657
         x2 = -2220.53
         y1 = 0.63508
@@ -167,7 +169,6 @@ def touch():
             x1, x2, y1, y2 = calibration()
         p = ts.touch_point
         if mode_sw.value:
-            print("A")
             mode += 1
             if mode == 2:
                 mode = 0
