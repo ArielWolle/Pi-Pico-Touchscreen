@@ -193,8 +193,7 @@ def touch():
 
 def main():
 
-    while True:
-        touch()
+    touch()
 
 
 main()
