@@ -4,6 +4,7 @@ import adafruit_touchscreen
 import board
 import digitalio
 import usb_hid
+import storage
 import ulab
 from adafruit_hid.digitizer import Digitizer
 
@@ -51,7 +52,7 @@ def solve(min, max):
     return [x[0][0], x[1][0]]
 
 
-def calibration():
+def calibration(store):
     global ts
 
     p = ts.touch_point
@@ -120,16 +121,38 @@ def calibration():
     print("X MAX: ", x_max)
     print("Y MIN: ", y_min)
     print("Y MAX: ", y_max)
+    temp = solve(x_min, x_max) + solve(y_min, y_max)
+    store = True
+    with open("/saved.txt", "w") as fp:
+        fp.write(str(temp[0]) + " " + str(temp[1]))
+        fp.write(str(temp[2]) + " " + str(temp[3]))
+        fp.close()
+    store = False
+    return temp
 
-    return solve(x_min, x_max) + solve(y_min, y_max)
 
-
-def touch(x1, x2, y1, y2):
+def touch():
+    store = False
+    storage.remount("/", store)
     global ts
+    x1 = 0
+    x2 = 0
+    y1 = 0
+    y2 = 0
     digitizer = Digitizer(usb_hid.devices)
+    with open("/saved.txt", "r") as fp:
+        print("Opening")
+        x1, x2 = fp.readline().split(" ")
+        x1 = int(x1)
+        x2 = int(x2)
+        print(x1, x2)
+        y1, y2 = fp.readline().split(" ")
+        y1 = int(y1)
+        y2 = int(y2)
+        fp.close()
     while True:
         if not switch.value:
-            return
+            x1, x2, y1, y2 = calibration(store)
         p = ts.touch_point
         if p:
             if p[0] > 10 and p[2] > 15000:
@@ -143,6 +166,10 @@ def touch(x1, x2, y1, y2):
             digitizer.release_all_buttons()
 
 
-while True:
-    x_m, x_b, y_m, y_b = calibration()
-    touch(x_m, x_b, y_m, y_b)
+def main():
+
+    while True:
+        touch()
+
+
+main()
