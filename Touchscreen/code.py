@@ -8,7 +8,7 @@ import storage
 import ulab
 from adafruit_hid.digitizer import Digitizer
 
-
+storage.remount("/")
 red = digitalio.DigitalInOut(board.LED_R)
 green = digitalio.DigitalInOut(board.LED_G)
 blue = digitalio.DigitalInOut(board.LED_B)
@@ -52,7 +52,7 @@ def solve(min, max):
     return [x[0][0], x[1][0]]
 
 
-def calibration(store):
+def calibration():
     global ts
 
     p = ts.touch_point
@@ -122,18 +122,15 @@ def calibration(store):
     print("Y MIN: ", y_min)
     print("Y MAX: ", y_max)
     temp = solve(x_min, x_max) + solve(y_min, y_max)
-    store = True
     with open("/saved.txt", "w") as fp:
-        fp.write(str(temp[0]) + " " + str(temp[1]))
+        fp.write(str(temp[0]) + " " + str(temp[1]) + "\n")
         fp.write(str(temp[2]) + " " + str(temp[3]))
         fp.close()
-    store = False
     return temp
 
 
 def touch():
-    store = False
-    storage.remount("/", store)
+
     global ts
     x1 = 0
     x2 = 0
@@ -143,16 +140,16 @@ def touch():
     with open("/saved.txt", "r") as fp:
         print("Opening")
         x1, x2 = fp.readline().split(" ")
-        x1 = int(x1)
-        x2 = int(x2)
+        x1 = float(x1)
+        x2 = float(x2)
         print(x1, x2)
         y1, y2 = fp.readline().split(" ")
-        y1 = int(y1)
-        y2 = int(y2)
+        y1 = float(y1)
+        y2 = float(y2)
         fp.close()
     while True:
         if not switch.value:
-            x1, x2, y1, y2 = calibration(store)
+            x1, x2, y1, y2 = calibration()
         p = ts.touch_point
         if p:
             if p[0] > 10 and p[2] > 15000:
