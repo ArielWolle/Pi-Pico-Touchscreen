@@ -7,5 +7,10 @@
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.extraPaths": [
         ".vscode\\Pico-Stub\\stubs"
+    ],
+    "python.autoComplete.extraPaths": [
+        null,
+        "c:\\Users\\Ariel Wolle\\.vscode\\extensions\\joedevivo.vscode-circuitpython-0.1.8\\stubs",
+        "c:\\Users\\Ariel Wolle\\AppData\\Roaming\\Code\\User\\globalStorage\\joedevivo.vscode-circuitpython\\bundle\\20210314\\adafruit-circuitpython-bundle-py-20210314\\lib"
     ]
 }
