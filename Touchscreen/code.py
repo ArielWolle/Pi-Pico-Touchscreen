@@ -8,7 +8,6 @@ import storage
 import ulab
 from adafruit_hid.digitizer import Digitizer
 
-storage.remount("/")
 red = digitalio.DigitalInOut(board.LED_R)
 green = digitalio.DigitalInOut(board.LED_G)
 blue = digitalio.DigitalInOut(board.LED_B)
@@ -122,10 +121,12 @@ def calibration():
     print("Y MIN: ", y_min)
     print("Y MAX: ", y_max)
     temp = solve(x_min, x_max) + solve(y_min, y_max)
+    storage.remount("/", False)
     with open("/saved.txt", "w") as fp:
         fp.write(str(temp[0]) + " " + str(temp[1]) + "\n")
         fp.write(str(temp[2]) + " " + str(temp[3]))
         fp.close()
+    storage.remount("/", True)
     return temp
 
 
@@ -137,16 +138,23 @@ def touch():
     y1 = 0
     y2 = 0
     digitizer = Digitizer(usb_hid.devices)
-    with open("/saved.txt", "r") as fp:
-        print("Opening")
-        x1, x2 = fp.readline().split(" ")
-        x1 = float(x1)
-        x2 = float(x2)
-        print(x1, x2)
-        y1, y2 = fp.readline().split(" ")
-        y1 = float(y1)
-        y2 = float(y2)
-        fp.close()
+    try:
+        with open("/saved.txt", "r") as fp:
+            print("Opening")
+            x1, x2 = fp.readline().split(" ")
+            x1 = float(x1)
+            x2 = float(x2)
+            print(x1, x2)
+            y1, y2 = fp.readline().split(" ")
+            y1 = float(y1)
+            y2 = float(y2)
+            fp.close()
+    except:
+        print("ERROR when reading")
+        x1 = 0.599657
+        x2 = -2220.53
+        y1 = 0.63508
+        y2 = -3983.86
     while True:
         if not switch.value:
             x1, x2, y1, y2 = calibration()
