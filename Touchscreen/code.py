@@ -7,8 +7,9 @@ import usb_hid
 import storage
 import ulab
 from adafruit_hid.digitizer import Digitizer
+from adafruit_debouncer import Debouncer
 
-green = digitalio.DigitalInOut(board.LED_G)
+green = digitalio.DigitalInOut(board.GP4)
 
 top_L = digitalio.DigitalInOut(board.GP0)
 top_R = digitalio.DigitalInOut(board.GP1)
@@ -126,15 +127,12 @@ def calibration():
     print("Y MIN: ", y_min)
     print("Y MAX: ", y_max)
     temp = solve(x_min, x_max) + solve(y_min, y_max)
-    try:
-        storage.remount("/", False)
-        with open("/saved.txt", "w") as fp:
-            fp.write(str(temp[0]) + " " + str(temp[1]) + "\n")
-            fp.write(str(temp[2]) + " " + str(temp[3]))
-            fp.close()
-        storage.remount("/", True)
-    except:
-        print("ERROR did not save")
+    storage.remount("/", False)
+    with open("/saved.txt", "w") as fp:
+        fp.write(str(temp[0]) + " " + str(temp[1]) + "\n")
+        fp.write(str(temp[2]) + " " + str(temp[3]))
+        fp.close()
+    storage.remount("/", True)
     return temp
 
 
@@ -145,6 +143,7 @@ def touch():
     x2 = 0
     y1 = 0
     y2 = 0
+    last_mode = False
     digitizer = Digitizer(usb_hid.devices)
     try:
         with open("/saved.txt", "r") as fp:
@@ -158,7 +157,7 @@ def touch():
             y2 = float(y2)
             fp.close()
     except:
-        print("ERROR when reading reseting to default values")
+        print("ERROR when reading")
         x1 = 0.599657
         x2 = -2220.53
         y1 = 0.63508
@@ -168,6 +167,7 @@ def touch():
             x1, x2, y1, y2 = calibration()
         p = ts.touch_point
         if mode_sw.value:
+            print("A")
             mode += 1
             if mode == 2:
                 mode = 0
@@ -179,6 +179,7 @@ def touch():
         if p:
             if p[0] > 10 and p[2] > 15000:
                 try:
+                    print(p)
                     digitizer.move_pen(int(p[0] * x1 + x2), int(p[1] * y1 + y2))
                     digitizer.press_buttons(1)
                     if mode == 0:
@@ -193,7 +194,8 @@ def touch():
 
 def main():
 
-    touch()
+    while True:
+        touch()
 
 
 main()
