@@ -51,10 +51,6 @@ Adding a third pushbutton switch
 
 Make wiring diagram
 
-Comment code
-
-Clean up unessacary parts of code
-
 Improving CAD as current 3d print looks bad.
 
 Touchscreen wire placement
