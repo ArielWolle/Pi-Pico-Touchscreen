@@ -18,7 +18,7 @@ Cirrcuitpython enabled device with 4 analog I/O (they need to be digital compati
 
 ## Usage
 
-This porject is run off of adafruit's circuit python. 
+This project is run off of adafruit's circuit python. 
 
 You will need to make a new build of circuitpython to enable the digitizer (touchscreen). If running off of a pimoroni tiny 2040 a firmware build is included in the firmware folder.
 
