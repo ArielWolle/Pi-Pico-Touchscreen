@@ -48,7 +48,7 @@ Comment code
 
 Clean up unessacary parts of code
 
-Imporoving CAD as current 3d print looks bad.
+ImprovingCAD as current 3d print looks bad.
 
 Touchscreen wire placement
 
