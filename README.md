@@ -55,3 +55,4 @@ Improving CAD as current 3d print looks bad.
 
 Touchscreen wire placement
 
+Max velocity to remove stutter/jagged edges bug
