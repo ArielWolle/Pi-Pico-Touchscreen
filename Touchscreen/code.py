@@ -33,7 +33,7 @@ left_click.direction = digitalio.Direction.INPUT
 mode_sw.switch_to_input(pull=digitalio.Pull.DOWN)
 left_click.switch_to_input(pull=digitalio.Pull.DOWN)
 
-ts = adafruit_touchscreen.Touchscreen(board.A0, board.A1, board.A2, board.A3)
+ts = adafruit_touchscreen.Touchscreen(board.A3, board.A1, board.A2, board.A0)
 
 top_L.value = True
 top_R.value = True
@@ -41,13 +41,21 @@ bottom_L.value = True
 bottom_R.value = True
 green.value = True
 
+time.sleep(1)
+
+top_L.value = False
+top_R.value = False
+bottom_L.value = False
+bottom_R.value = False
+green.value = False
+
 
 def light_on(obj):
-    obj.value = False
+    obj.value = True
 
 
 def light_off(obj):
-    obj.value = True
+    obj.value = False
 
 
 def solve(min, max):
@@ -163,23 +171,22 @@ def touch():
         y1 = 0.63508
         y2 = -3983.86
     while True:
-        if not switch.value:
+        if left_click.value:
             x1, x2, y1, y2 = calibration()
         p = ts.touch_point
         if mode_sw.value:
             print("A")
-            mode += 1
-            if mode == 2:
+            if mode == 1:
                 mode = 0
-                green.value = True
-            else:
                 green.value = False
+            elif mode == 0:
+                mode = 1
+                green.value = True
             last_mode = mode_sw.value
             time.sleep(1)
         if p:
             if p[0] > 10 and p[2] > 15000:
                 try:
-                    print(p)
                     digitizer.move_pen(int(p[0] * x1 + x2), int(p[1] * y1 + y2))
                     digitizer.press_buttons(1)
                     if mode == 0:
