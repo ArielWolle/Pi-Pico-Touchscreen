@@ -43,7 +43,7 @@ Lastly draw to your hearts content.
 
 Random Stutter/Jagged edges
 
-Ejection needed for saving calibration (not anything I can do a circuitpython problem will be resolved when this issue is resolved https://github.com/adafruit/circuitpython/issues/4417)
+Ejection needed for saving calibration (not anything I can do. A circuitpython problem will be resolved when this issue is resolved https://github.com/adafruit/circuitpython/issues/4417)
 
 ## Next Steps
 
