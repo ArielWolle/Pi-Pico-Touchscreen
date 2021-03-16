@@ -34,42 +34,80 @@ left_click.switch_to_input(pull=digitalio.Pull.DOWN)
 
 ts = adafruit_touchscreen.Touchscreen(board.A3, board.A1, board.A2, board.A0)
 
-top_L.value = True
-top_R.value = True
-bottom_L.value = True
-bottom_R.value = True
-green.value = True
 
-time.sleep(1)
+def startup():
 
-top_L.value = False
-top_R.value = False
-bottom_L.value = False
-bottom_R.value = False
-green.value = False
+    # Initial Start up sequence so that you know all is going well
+
+    # Turn on all LEDS
+    top_L.value = True
+    top_R.value = True
+    bottom_L.value = True
+    bottom_R.value = True
+    green.value = True
+
+    # Wait a second
+    time.sleep(1)
+
+    # Turn all LEDS off
+    top_L.value = False
+    top_R.value = False
+    bottom_L.value = False
+    bottom_R.value = False
+    green.value = False
 
 
 def light_on(obj):
+
+    # Helper method to turn on the LEDS
+
     obj.value = True
 
 
 def light_off(obj):
+
+    # Helper method to turn off LEDS
+
     obj.value = False
 
 
 def solve(min, max):
-    a = ulab.array([[min, 1], [max, 1]])
-    b = ulab.array([[0], [32726]])
-    x = ulab.linalg.dot(ulab.linalg.inv(a), b)
-    return [x[0][0], x[1][0]]
+
+    # Uses linear algebra to find the soloution of 2 linear equations
+
+    a = ulab.array([[min, 1], [max, 1]])  # Stores the equation side of the matrix
+
+    b = ulab.array([[0], [32726]])  # Stores the resultant side of the matrix
+
+    x = ulab.linalg.dot(
+        ulab.linalg.inv(a), b
+    )  # Uses the formula inv(A) dot (B) = Soloution matrix
+
+    return [x[0][0], x[1][0]]  # Returns soloution matrix
 
 
 def calibration():
-    global ts
 
-    p = ts.touch_point
+    # Calibration method
+
+    # Calibrates the screen by having the user press the 4 corners of the touchscreen, the corner that is meant to be touched lights up with LEDS
+
+    # Each corner press has 5 steps
+
+    # Turn on the corressponding LED
+    # Wait for touch input
+    # Print the x,y,strength of the touch point to the serial com port
+    # Turn off corresponding LED
+    # Save the x and y values (automatically averages out min/max values)
+    # Wait one second
+
+    ############################
+
+    # Start of corner touch calibration
+
     # TOP LEFT
     light_on(top_L)
+
     while True:
         p = ts.touch_point
 
@@ -129,20 +167,38 @@ def calibration():
     y_max = (y_max + p[1]) / 2
     time.sleep(1)
 
+    # End of corner touch calibration
+
+    #######################
+
+    # Print the minimium and maximium values onto the serial com port
     print("X MIN: ", x_min)
     print("X MAX: ", x_max)
     print("Y MIN: ", y_min)
     print("Y MAX: ", y_max)
-    temp = solve(x_min, x_max) + solve(y_min, y_max)
-    try:
-        storage.remount("/", False)
 
+    # Use linear algebra to solve the system of two equations to conver the touchscreens 0-65xxx(max 12 bit ADC max value) to the digitizer 0-32767 values
+
+    temp = solve(x_min, x_max) + solve(y_min, y_max)
+
+    # Try to save the calibration data onto the flash memory
+
+    # You need to eject the USB mass storage device with the current firmware build new firmware will be uploaded whent this issue is resolved https://github.com/adafruit/circuitpython/issues/4417
+
+    try:
+        storage.remount("/", False)  # Try mounting the storage to save
+
+        # Saves the calibration data for the two y=mx+b as:
+        # m1 b1\nm2 b2
         with open("/saved.txt", "w") as fp:
             fp.write(str(temp[0]) + " " + str(temp[1]) + "\n")
             fp.write(str(temp[2]) + " " + str(temp[3]))
             fp.close()
-            storage.remount("/", True)
+        storage.remount("/", True)  # Unmount the storage
     except:
+
+        # If the calibration does not save the yellow LED flashes quickly 3 times but the calibration stays until next power cycle
+
         for i in range(3):
             light_on(green)
             time.sleep(0.25)
@@ -153,14 +209,22 @@ def calibration():
 
 
 def touch():
+
+    # Touch Method that sends the USB HID packets
+
+    # This method first reads the on flash memory calibration data and stores it in a variable
+    # If this read Fails it reverts to defulat settings and flashes the green LEDS 3 times
+
     mode = 0
-    global ts
-    x1 = 0
-    x2 = 0
-    y1 = 0
-    y2 = 0
-    last_mode = False
     digitizer = Digitizer(usb_hid.devices)
+
+    # The useful digitzer methods include
+    # digitizer.move_pen(x,y)
+    # This method moves the pen to the corresponding x and y location with a max value of 32767 and a minimium value of 0
+    # digitizer.press_buttons(button)
+    # This method takes in an int corresponding to which button is pressed
+    # Button 1 = move cursor
+    # Button 2 = left click mouse
     try:
         with open("/saved.txt", "r") as fp:
             print("Opening")
@@ -178,39 +242,73 @@ def touch():
         x2 = -2220.53
         y1 = 0.63508
         y2 = -3983.86
+        for i in range(0, 3):
+            # Turn on green LEDS
+            top_L.value = True
+            top_R.value = True
+            bottom_L.value = True
+            bottom_R.value = True
+
+            # Wait
+            time.sleep(0.25)
+
+            # Turn all green LEDS off
+            top_L.value = False
+            top_R.value = False
+            bottom_L.value = False
+            bottom_R.value = False
+
+            # wait
+            time.sleep(0.25)
     while True:
+
+        # Main loop that runs while using the touchscreen
+
+        # Checks if the user wants to recalibrate the screen and if so resets the x and y values to the new calibration data
+
         if left_click.value:
             x1, x2, y1, y2 = calibration()
+
+        # Uses the Adafruit touchscreen library to recive and store touch input in the varibale p
         p = ts.touch_point
+
+        # If the switch mode button is pressed swap modes and wait one second
         if mode_sw.value:
-            print("A")
+
             if mode == 1:
                 mode = 0
                 green.value = False
             elif mode == 0:
                 mode = 1
                 green.value = True
-            last_mode = mode_sw.value
             time.sleep(1)
+
+        # Checks if the touchscreen is being pressed
         if p:
+            # Checks if the touchscreen input is not garbage and if the touchscreen is being held with enough pressure
             if p[0] > 10 and p[2] > 20000:
                 try:
+                    # Moves the pen to the corresponding x and y values from a range of 0-32767 using the calibration data
                     digitizer.move_pen(int(p[0] * x1 + x2), int(p[1] * y1 + y2))
+                    # Moves the cursor itself
                     digitizer.press_buttons(1)
+
+                    # Checks if the mode is in drawing mode, if so hold left click as you move the cursor
                     if mode == 0:
                         digitizer.press_buttons(2)
+
+                    # Checks if the mode is in the cursor mode, if so just move the cursor don't press left click
+
+                    # The current tablet is missing a button so that in this mode if the button is pressed down the tablet will left click
                     elif mode == 1 and left_click.value:
                         digitizer.press_buttons(2)
+
                 except:
+                    # If the touchscreen records input from outside the calibration square the input is desregarded
                     print("ERROR values: ", p)
         else:
+            # if the touchscreen sees no input let go of left click and the cursor
             digitizer.release_all_buttons()
 
 
-def main():
-
-    while True:
-        touch()
-
-
-main()
+touch()
