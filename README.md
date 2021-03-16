@@ -2,7 +2,8 @@
 # PI-Pico-Touchscreen
 
 Custom touchscreen designed by me running off of a pimoroni tiny 2040 + 4 wire resistive touchscreen
-![2021-03-16 14 16 36](https://user-images.githubusercontent.com/36164850/111360265-eb728500-8662-11eb-955c-d654abba8ba8.jpeg)
+![image](https://user-images.githubusercontent.com/36164850/111360370-09d88080-8663-11eb-9af8-aa87849c462b.png)
+
 
 ## Prerequisites
 
