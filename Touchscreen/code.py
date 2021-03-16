@@ -7,41 +7,55 @@ import usb_hid
 import storage
 import ulab
 from adafruit_hid.digitizer import Digitizer
+from adafruit_debouncer import Debouncer
 
-red = digitalio.DigitalInOut(board.LED_R)
-green = digitalio.DigitalInOut(board.LED_G)
-blue = digitalio.DigitalInOut(board.LED_B)
+green = digitalio.DigitalInOut(board.GP4)
+
+top_L = digitalio.DigitalInOut(board.GP0)
+top_R = digitalio.DigitalInOut(board.GP1)
+bottom_L = digitalio.DigitalInOut(board.GP2)
+bottom_R = digitalio.DigitalInOut(board.GP3)
+
 switch = digitalio.DigitalInOut(board.USER_SW)
+mode_sw = digitalio.DigitalInOut(board.GP7)
+left_click = digitalio.DigitalInOut(board.GP6)
 
-red.direction = digitalio.Direction.OUTPUT
-blue.direction = digitalio.Direction.OUTPUT
+top_L.direction = digitalio.Direction.OUTPUT
+top_R.direction = digitalio.Direction.OUTPUT
+bottom_L.direction = digitalio.Direction.OUTPUT
+bottom_R.direction = digitalio.Direction.OUTPUT
 green.direction = digitalio.Direction.OUTPUT
+
 switch.direction = digitalio.Direction.INPUT
+mode_sw.direction = digitalio.Direction.INPUT
+left_click.direction = digitalio.Direction.INPUT
 
-ts = adafruit_touchscreen.Touchscreen(board.A0, board.A1, board.A2, board.A3)
+mode_sw.switch_to_input(pull=digitalio.Pull.DOWN)
+left_click.switch_to_input(pull=digitalio.Pull.DOWN)
 
+ts = adafruit_touchscreen.Touchscreen(board.A3, board.A1, board.A2, board.A0)
+
+top_L.value = True
+top_R.value = True
+bottom_L.value = True
+bottom_R.value = True
 green.value = True
-blue.value = True
-red.value = True
+
+time.sleep(1)
+
+top_L.value = False
+top_R.value = False
+bottom_L.value = False
+bottom_R.value = False
+green.value = False
 
 
 def light_on(obj):
-    obj.value = False
-
-
-def light_off(obj):
     obj.value = True
 
 
-def light():
-    while True:
-
-        if switch.value:
-            red.value = False  # switch not pressed light on
-        else:
-            red.value = True  # switch pressed light off
-        print(red.value)
-        time.sleep(0.01)
+def light_off(obj):
+    obj.value = False
 
 
 def solve(min, max):
@@ -56,7 +70,7 @@ def calibration():
 
     p = ts.touch_point
     # TOP LEFT
-    light_on(red)
+    light_on(top_L)
     while True:
         p = ts.touch_point
 
@@ -65,14 +79,14 @@ def calibration():
                 break
 
     print(p)
-    light_off(red)
+    light_off(top_L)
     x_min = p[0]
     y_min = p[1]
     time.sleep(1)
 
     # TOP RIGHT
     p = ts.touch_point
-    light_on(red)
+    light_on(top_R)
 
     while True:
         p = ts.touch_point
@@ -81,7 +95,7 @@ def calibration():
             if p[0] > 3000 and p[1] > 3000 and p[2] > 15000:
                 break
     print(p)
-    light_off(red)
+    light_off(top_R)
     y_min = (y_min + p[1]) / 2
     x_max = p[0]
     time.sleep(1)
@@ -89,14 +103,14 @@ def calibration():
     # BOTTOM LEFT
     p = ts.touch_point
 
-    light_on(red)
+    light_on(bottom_L)
     while True:
         p = ts.touch_point
         if p:
             if p[0] > 3000 and p[1] > 3000 and p[2] > 15000:
                 break
     print(p)
-    light_off(red)
+    light_off(bottom_L)
     x_min = (x_min + p[0]) / 2
     y_max = p[1]
     time.sleep(1)
@@ -104,14 +118,14 @@ def calibration():
     # BOTTOM RIGHT
     p = ts.touch_point
 
-    light_on(red)
+    light_on(bottom_R)
     while True:
         p = ts.touch_point
         if p:
             if p[0] > 3000 and p[1] > 3000 and p[2] > 15000:
                 break
     print(p)
-    light_off(red)
+    light_off(bottom_R)
     x_max = (x_max + p[0]) / 2
     y_max = (y_max + p[1]) / 2
     time.sleep(1)
@@ -131,12 +145,13 @@ def calibration():
 
 
 def touch():
-
+    mode = 0
     global ts
     x1 = 0
     x2 = 0
     y1 = 0
     y2 = 0
+    last_mode = False
     digitizer = Digitizer(usb_hid.devices)
     try:
         with open("/saved.txt", "r") as fp:
@@ -156,15 +171,28 @@ def touch():
         y1 = 0.63508
         y2 = -3983.86
     while True:
-        if not switch.value:
+        if left_click.value:
             x1, x2, y1, y2 = calibration()
         p = ts.touch_point
+        if mode_sw.value:
+            print("A")
+            if mode == 1:
+                mode = 0
+                green.value = False
+            elif mode == 0:
+                mode = 1
+                green.value = True
+            last_mode = mode_sw.value
+            time.sleep(1)
         if p:
             if p[0] > 10 and p[2] > 15000:
                 try:
                     digitizer.move_pen(int(p[0] * x1 + x2), int(p[1] * y1 + y2))
                     digitizer.press_buttons(1)
-                    digitizer.press_buttons(2)
+                    if mode == 0:
+                        digitizer.press_buttons(2)
+                    elif mode == 1 and left_click.value:
+                        digitizer.press_buttons(2)
                 except:
                     print("ERROR values: ", p)
         else:
