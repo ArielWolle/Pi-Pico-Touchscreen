@@ -7,7 +7,6 @@ import usb_hid
 import storage
 import ulab
 from adafruit_hid.digitizer import Digitizer
-from adafruit_debouncer import Debouncer
 
 green = digitalio.DigitalInOut(board.GP4)
 
@@ -135,12 +134,21 @@ def calibration():
     print("Y MIN: ", y_min)
     print("Y MAX: ", y_max)
     temp = solve(x_min, x_max) + solve(y_min, y_max)
-    storage.remount("/", False)
-    with open("/saved.txt", "w") as fp:
-        fp.write(str(temp[0]) + " " + str(temp[1]) + "\n")
-        fp.write(str(temp[2]) + " " + str(temp[3]))
-        fp.close()
-    storage.remount("/", True)
+    try:
+        storage.remount("/", False)
+
+        with open("/saved.txt", "w") as fp:
+            fp.write(str(temp[0]) + " " + str(temp[1]) + "\n")
+            fp.write(str(temp[2]) + " " + str(temp[3]))
+            fp.close()
+            storage.remount("/", True)
+    except:
+        for i in range(3):
+            light_on(green)
+            time.sleep(0.25)
+            light_off(green)
+            time.sleep(0.25)
+
     return temp
 
 
@@ -185,7 +193,7 @@ def touch():
             last_mode = mode_sw.value
             time.sleep(1)
         if p:
-            if p[0] > 10 and p[2] > 15000:
+            if p[0] > 10 and p[2] > 20000:
                 try:
                     digitizer.move_pen(int(p[0] * x1 + x2), int(p[1] * y1 + y2))
                     digitizer.press_buttons(1)
