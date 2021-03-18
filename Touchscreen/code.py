@@ -318,4 +318,5 @@ def touch():
             digitizer.release_all_buttons()
 
 
+startup()
 touch()
