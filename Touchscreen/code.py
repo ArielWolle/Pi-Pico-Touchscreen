@@ -217,6 +217,10 @@ def touch():
 
     mode = 0
     digitizer = Digitizer(usb_hid.devices)
+    last_time = time.monotonic()
+    last_speed = 1
+    p = ts.touch_point
+    last_p = [0, 0, 0]
 
     # The useful digitzer methods include
     # digitizer.move_pen(x,y)
@@ -260,8 +264,8 @@ def touch():
 
             # wait
             time.sleep(0.25)
-    while True:
 
+    while True:
         # Main loop that runs while using the touchscreen
 
         # Checks if the user wants to recalibrate the screen and if so resets the x and y values to the new calibration data
@@ -287,28 +291,46 @@ def touch():
         if p:
             # Checks if the touchscreen input is not garbage and if the touchscreen is being held with enough pressure
             if p[0] > 10 and p[2] > 20000:
-                try:
-                    # Moves the pen to the corresponding x and y values from a range of 0-32767 using the calibration data
-                    digitizer.move_pen(int(p[0] * x1 + x2), int(p[1] * y1 + y2))
-                    # Moves the cursor itself
-                    digitizer.press_buttons(1)
+                if last_p == 1:
+                    last_p = p
+                speed = (
+                    ((p[0] - last_p[0]) ** 2 + (p[1] - last_p[1]) ** 2) ** (1 / 2)
+                ) / ((time.monotonic() - last_time) * 1000)
 
-                    # Checks if the mode is in drawing mode, if so hold left click as you move the cursor
-                    if mode == 0:
-                        digitizer.press_buttons(2)
+                if (speed / last_speed) < 1.5:
+                    try:
+                        # Moves the pen to the corresponding x and y values from a range of 0-32767 using the calibration data
+                        digitizer.move_pen(int(p[0] * x1 + x2), int(p[1] * y1 + y2))
+                        # Moves the cursor itself
+                        digitizer.press_buttons(1)
 
-                    # Checks if the mode is in the cursor mode, if so just move the cursor don't press left click
+                        # Checks if the mode is in drawing mode, if so hold left click as you move the cursor
+                        if mode == 0:
+                            digitizer.press_buttons(2)
 
-                    # The current tablet is missing a button so that in this mode if the button is pressed down the tablet will left click
-                    elif mode == 1 and left_click.value:
-                        digitizer.press_buttons(2)
+                        # Checks if the mode is in the cursor mode, if so just move the cursor don't press left click
 
-                except:
-                    # If the touchscreen records input from outside the calibration square the input is desregarded
-                    print("ERROR values: ", p)
+                        # The current tablet is missing a button so that in this mode if the button is pressed down the tablet will left click
+                        elif mode == 1 and left_click.value:
+                            digitizer.press_buttons(2)
+
+                    except:
+                        # If the touchscreen records input from outside the calibration square the input is desregarded
+                        print("ERROR values: ", p)
+                last_p = p
+                last_time = time.monotonic()
+                if speed == 0:
+                    last_speed = 0.001
+                else:
+                    last_speed = speed
+
         else:
+            if last_p != 1:
+                last_p = 1
+            last_time = time.monotonic()
             # if the touchscreen sees no input let go of left click and the cursor
             digitizer.release_all_buttons()
 
 
+startup()
 touch()
