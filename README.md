@@ -47,8 +47,6 @@ Ejection needed for saving calibration (not anything I can do. A circuitpython p
 
 ## Next Steps
 
-Adding a third pushbutton switch
-
 Make wiring diagram
 
 Improving CAD as current 3d print looks bad.
