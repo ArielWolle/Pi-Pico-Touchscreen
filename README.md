@@ -15,7 +15,7 @@ Cirrcuitpython enabled device with 4 analog I/O (they need to be digital compati
 
 4 wire resistive touchscreen (the one I got https://www.ebay.ca/itm/12-1inch-4-wire-Resistive-Touch-Panel-For-1024x768-1440x1050-4-3-LCD-Screen/180842889555?ssPageName=STRK%3AMEBIDX%3AIT&_trksid=p2060353.m2749.l2649)
 
-2 6x6 pushbutton switches
+3 6x6 pushbutton switches
 
 4 3mm green LED
 
