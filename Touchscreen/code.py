@@ -8,22 +8,22 @@ import storage
 import ulab
 from adafruit_hid.digitizer import Digitizer
 
-green = digitalio.DigitalInOut(board.GP4)
+yelloww = digitalio.DigitalInOut(board.GP4)
 
 top_L = digitalio.DigitalInOut(board.GP0)
 top_R = digitalio.DigitalInOut(board.GP1)
 bottom_L = digitalio.DigitalInOut(board.GP2)
 bottom_R = digitalio.DigitalInOut(board.GP3)
 
-switch = digitalio.DigitalInOut(board.USER_SW)
+switch = digitalio.DigitalInOut(board.GP6)
 mode_sw = digitalio.DigitalInOut(board.GP7)
-left_click = digitalio.DigitalInOut(board.GP6)
+left_click = digitalio.DigitalInOut(board.GP5)
 
 top_L.direction = digitalio.Direction.OUTPUT
 top_R.direction = digitalio.Direction.OUTPUT
 bottom_L.direction = digitalio.Direction.OUTPUT
 bottom_R.direction = digitalio.Direction.OUTPUT
-green.direction = digitalio.Direction.OUTPUT
+yelloww.direction = digitalio.Direction.OUTPUT
 
 switch.direction = digitalio.Direction.INPUT
 mode_sw.direction = digitalio.Direction.INPUT
@@ -31,6 +31,7 @@ left_click.direction = digitalio.Direction.INPUT
 
 mode_sw.switch_to_input(pull=digitalio.Pull.DOWN)
 left_click.switch_to_input(pull=digitalio.Pull.DOWN)
+switch.switch_to_input(pull=digitalio.Pull.DOWN)
 
 ts = adafruit_touchscreen.Touchscreen(board.A3, board.A1, board.A2, board.A0)
 
@@ -44,7 +45,7 @@ def startup():
     top_R.value = True
     bottom_L.value = True
     bottom_R.value = True
-    green.value = True
+    yelloww.value = True
 
     # Wait a second
     time.sleep(1)
@@ -53,8 +54,9 @@ def startup():
     top_L.value = False
     top_R.value = False
     bottom_L.value = False
+
     bottom_R.value = False
-    green.value = False
+    yelloww.value = False
 
 
 def light_on(obj):
@@ -86,8 +88,18 @@ def solve(min, max):
     return [x[0][0], x[1][0]]  # Returns soloution matrix
 
 
-def calibration():
+def calibration_loop():
+    while True:
+        if left_click.value:
+            return 1
+        p = ts.touch_point
 
+        if p:
+            if p[0] > 3000 and p[1] > 3000 and p[2] > 15000:
+                return p
+
+
+def calibration(old_data):
     # Calibration method
 
     # Calibrates the screen by having the user press the 4 corners of the touchscreen, the corner that is meant to be touched lights up with LEDS
@@ -108,12 +120,9 @@ def calibration():
     # TOP LEFT
     light_on(top_L)
 
-    while True:
-        p = ts.touch_point
-
-        if p:
-            if p[0] > 3000 and p[1] > 3000 and p[2] > 15000:
-                break
+    p = calibration_loop()
+    if p == 1:
+        return old_data
 
     print(p)
     light_off(top_L)
@@ -125,12 +134,9 @@ def calibration():
     p = ts.touch_point
     light_on(top_R)
 
-    while True:
-        p = ts.touch_point
-
-        if p:
-            if p[0] > 3000 and p[1] > 3000 and p[2] > 15000:
-                break
+    p = calibration_loop()
+    if p == 1:
+        return old_data
     print(p)
     light_off(top_R)
     y_min = (y_min + p[1]) / 2
@@ -141,11 +147,9 @@ def calibration():
     p = ts.touch_point
 
     light_on(bottom_L)
-    while True:
-        p = ts.touch_point
-        if p:
-            if p[0] > 3000 and p[1] > 3000 and p[2] > 15000:
-                break
+    p = calibration_loop()
+    if p == 1:
+        return old_data
     print(p)
     light_off(bottom_L)
     x_min = (x_min + p[0]) / 2
@@ -156,11 +160,9 @@ def calibration():
     p = ts.touch_point
 
     light_on(bottom_R)
-    while True:
-        p = ts.touch_point
-        if p:
-            if p[0] > 3000 and p[1] > 3000 and p[2] > 15000:
-                break
+    p = calibration_loop()
+    if p == 1:
+        return old_data
     print(p)
     light_off(bottom_R)
     x_max = (x_max + p[0]) / 2
@@ -200,9 +202,9 @@ def calibration():
         # If the calibration does not save the yellow LED flashes quickly 3 times but the calibration stays until next power cycle
 
         for i in range(3):
-            light_on(green)
+            light_on(yelloww)
             time.sleep(0.25)
-            light_off(green)
+            light_off(yelloww)
             time.sleep(0.25)
 
     return temp
@@ -213,7 +215,7 @@ def touch():
     # Touch Method that sends the USB HID packets
 
     # This method first reads the on flash memory calibration data and stores it in a variable
-    # If this read Fails it reverts to defulat settings and flashes the green LEDS 3 times
+    # If this read Fails it reverts to defulat settings and flashes the yelloww LEDS 3 times
 
     mode = 0
     digitizer = Digitizer(usb_hid.devices)
@@ -247,7 +249,7 @@ def touch():
         y1 = 0.63508
         y2 = -3983.86
         for i in range(0, 3):
-            # Turn on green LEDS
+            # Turn on yelloww LEDS
             top_L.value = True
             top_R.value = True
             bottom_L.value = True
@@ -256,7 +258,7 @@ def touch():
             # Wait
             time.sleep(0.25)
 
-            # Turn all green LEDS off
+            # Turn all yelloww LEDS off
             top_L.value = False
             top_R.value = False
             bottom_L.value = False
@@ -270,8 +272,12 @@ def touch():
 
         # Checks if the user wants to recalibrate the screen and if so resets the x and y values to the new calibration data
 
-        if left_click.value:
-            x1, x2, y1, y2 = calibration()
+        if switch.value:
+            x1, x2, y1, y2 = calibration([x1, x2, y1, y2])
+            light_off(bottom_L)
+            light_off(bottom_R)
+            light_off(top_L)
+            light_off(top_R)
 
         # Uses the Adafruit touchscreen library to recive and store touch input in the varibale p
         p = ts.touch_point
@@ -281,10 +287,10 @@ def touch():
 
             if mode == 1:
                 mode = 0
-                green.value = False
+                yelloww.value = False
             elif mode == 0:
                 mode = 1
-                green.value = True
+                yelloww.value = True
             time.sleep(1)
 
         # Checks if the touchscreen is being pressed
