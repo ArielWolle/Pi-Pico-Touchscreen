@@ -296,7 +296,7 @@ def touch():
         # Checks if the touchscreen is being pressed
         if p:
             # Checks if the touchscreen input is not garbage and if the touchscreen is being held with enough pressure
-            if p[0] > 10 and p[2] > 20000:
+            if p[0] > 10 and p[2] > 10000:
                 if last_p == 1:
                     last_p = p
                 speed = (
