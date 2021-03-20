@@ -6,7 +6,9 @@ Custom touchscreen designed by me running off of a pimoroni tiny 2040 + 4 wire r
 
 Code is in the Touchscreen folder
 
-![image](https://user-images.githubusercontent.com/36164850/111360370-09d88080-8663-11eb-9af8-aa87849c462b.png)
+
+![image](https://user-images.githubusercontent.com/36164850/111881001-e8d69f00-8984-11eb-9831-54cff7fd3ced.png)
+
 
 
 ## Prerequisites
