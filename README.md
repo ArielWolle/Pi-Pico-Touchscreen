@@ -53,3 +53,12 @@ Improving CAD as current 3d print looks bad.
 Touchscreen wire placement
 
 Build new firmware with the fix of (https://github.com/adafruit/circuitpython/issues/4417)
+
+
+Drawing vid
+https://user-images.githubusercontent.com/36164850/138474686-7877d604-5d39-49c1-bcea-47a5bc7aa096.mov
+
+
+Calibration vid
+https://user-images.githubusercontent.com/36164850/138474673-e01c95d1-a04b-4b8c-a8dc-2e1ca639f9e3.mov
+
